@@ -27,9 +27,23 @@ struct Config {
     )]
     colored: bool,
 }
+
+impl std::fmt::Display for Config {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} {} by {} image will be generated. Max depth of expressions {}",
+            if self.colored { "Colored" } else { "Grayscale" },
+            self.w,
+            self.h,
+            self.depth
+        )
+    }
+}
+
 fn main() {
     let config = Config::parse();
-    println!("{:#?}", config);
+    println!("{}", config);
 
     if config.colored {
         let mut image = RgbImage::new(config.w, config.h);
