@@ -28,18 +28,22 @@ enum Opcode {
     Cos,
     ScaledSigmoid,
     Sqrt,
+    Min,
+    Max,
 }
 
 impl Distribution<Opcode> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Opcode {
-        match rng.gen_range(0..=6) {
+        match rng.gen_range(0..=8) {
             0 => Opcode::Substitute,
             1 => Opcode::Mult,
             2 => Opcode::Average,
             3 => Opcode::Sin,
             4 => Opcode::Cos,
             5 => Opcode::ScaledSigmoid,
-            _ => Opcode::Sqrt
+            6 => Opcode::Sqrt,
+            7 => Opcode::Min,
+            _ => Opcode::Max,
         }
     }
 }
@@ -97,26 +101,40 @@ impl Expression {
             Opcode::Mult => {
                 self.left.as_ref().unwrap().as_ref().eval(x, y)
                     * self.right.as_ref().unwrap().as_ref().eval(x, y)
-            },
+            }
             Opcode::Sin => {
                 (self.left.as_ref().unwrap().as_ref().eval(x, y) * std::f32::consts::PI).sin()
-            },
+            }
             Opcode::Cos => {
                 (self.left.as_ref().unwrap().as_ref().eval(x, y) * std::f32::consts::PI).cos()
-            },
+            }
             Opcode::ScaledSigmoid => {
                 2. / (1. + (-self.left.as_ref().unwrap().as_ref().eval(x, y)).exp()) - 1.0
-            },
+            }
             Opcode::Sqrt => {
                 // Note: here we take an absolute value of the nested expression as square root
                 // isn't defined for negative arguments
                 self.left.as_ref().unwrap().as_ref().eval(x, y).abs().sqrt()
             }
+            Opcode::Min => self
+                .left
+                .as_ref()
+                .unwrap()
+                .as_ref()
+                .eval(x, y)
+                .min(self.right.as_ref().unwrap().as_ref().eval(x, y)),
+            Opcode::Max => self
+                .left
+                .as_ref()
+                .unwrap()
+                .as_ref()
+                .eval(x, y)
+                .max(self.right.as_ref().unwrap().as_ref().eval(x, y)),
             Opcode::Average => {
                 (self.left.as_ref().unwrap().as_ref().eval(x, y)
                     + self.right.as_ref().unwrap().as_ref().eval(x, y))
                     / 2.0
-            },
+            }
         }
     }
 }
