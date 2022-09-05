@@ -27,17 +27,19 @@ enum Opcode {
     Sin,
     Cos,
     ScaledSigmoid,
+    Sqrt,
 }
 
 impl Distribution<Opcode> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Opcode {
-        match rng.gen_range(0..=5) {
+        match rng.gen_range(0..=6) {
             0 => Opcode::Substitute,
             1 => Opcode::Mult,
             2 => Opcode::Average,
             3 => Opcode::Sin,
             4 => Opcode::Cos,
-            _ => Opcode::ScaledSigmoid,
+            5 => Opcode::ScaledSigmoid,
+            _ => Opcode::Sqrt
         }
     }
 }
@@ -70,7 +72,7 @@ impl Expression {
                     right: None,
                     value: Some(rand::random()),
                 },
-                Opcode::Sin | Opcode::Cos | Opcode::ScaledSigmoid => Expression {
+                Opcode::Sin | Opcode::Cos | Opcode::ScaledSigmoid | Opcode::Sqrt => Expression {
                     operation: op,
                     left: Some(Rc::new(Expression::new(depth - 1))),
                     right: None,
@@ -105,6 +107,11 @@ impl Expression {
             Opcode::ScaledSigmoid => {
                 2. / (1. + (-self.left.as_ref().unwrap().as_ref().eval(x, y)).exp()) - 1.0
             },
+            Opcode::Sqrt => {
+                // Note: here we take an absolute value of the nested expression as square root
+                // isn't defined for negative arguments
+                self.left.as_ref().unwrap().as_ref().eval(x, y).abs().sqrt()
+            }
             Opcode::Average => {
                 (self.left.as_ref().unwrap().as_ref().eval(x, y)
                     + self.right.as_ref().unwrap().as_ref().eval(x, y))
